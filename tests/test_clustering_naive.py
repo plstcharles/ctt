@@ -1,7 +1,7 @@
 import numpy as np
 import unittest
 
-import covid19sim.frozen.clustering_simple as clu
+import covid19sim.frozen.clustering_naive as clu
 import covid19sim.frozen.message_utils as mu
 from tests.utils import FakeHuman, generate_received_messages, Visit
 
@@ -9,7 +9,12 @@ never = 9999  # dirty macro to indicate a human will never get infected
 ui = np.uint64  # dirty macro to cast integers to np.uint64
 
 
-class SimpleClusteringTests(unittest.TestCase):
+# TODO: THERE'S ONLY ONE FUNCTIONAL TEST WE CARE ABOUT: RUN WITH LOTS OF PEOPLE, AND...
+#         - VERIFY THAT THIS IMPL RETURNS FEWER CLUSTERS THAN THE SIMPLISTIC ONE
+#         - VERIFY THAT THIS IMPL HAS LESS 'HETEROGENEOUS' CLUSTERS THAN THE SIMPLISTIC ONE
+
+
+class NaiveClusteringTests(unittest.TestCase):
     # note: we only ever build & test clusters for a single human, assuming it would also work for others
 
     def test_same_day_visit_clusters(self):

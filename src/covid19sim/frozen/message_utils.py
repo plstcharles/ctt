@@ -19,11 +19,22 @@ RiskLevelType = np.uint8
 # TODO: change naive code below to support the rotating day-of-month timestamp in updates
 
 
-def get_days_offset(time_old: np.uint64, time_new: np.uint64) -> float:
+def get_days_offset(
+        time_old: np.uint64,
+        time_new: np.uint64,
+        ticks_per_day: np.uint64 = 24 * 60 * 60,  # assumes one tick per second
+) -> float:
     """Returns the number of days between two timestamps."""
-    # NOTE: assumes tick = 1 second, and days = (24 * 60 * 60) ticks
-    # TODO: replace with Olexa's utils?
-    return (int(time_new) - int(time_old)) / (24 * 60 * 60)
+    tick_diff = get_ticks_offset(time_old, time_new)
+    return tick_diff / ticks_per_day
+
+
+def get_ticks_offset(
+        time_old: np.uint64,
+        time_new: np.uint64
+) -> int:
+    """Returns the number of ticks between two timestmaps."""
+    return int(time_new) - int(time_old)
 
 
 def create_new_uid(rng=None) -> np.uint8:
@@ -55,7 +66,7 @@ class EncounterMessage:
     """Quantified risk level of the encountered user."""
 
     encounter_time: np.uint64
-    """Day-wise (?) discretized encounter timestamp."""
+    """Discretized encounter timestamp."""
 
     #############################################
     # unobserved variables (for debugging only!)
@@ -90,7 +101,7 @@ class UpdateMessage:
     """New quantified risk level of the updater."""
 
     encounter_time: np.uint64
-    """Day-wise (?) discretized encounter timestamp."""
+    """Discretized encounter timestamp."""
 
     update_time: np.uint64
     """Update generation timestamp."""  # TODO: this might be a 1-31 rotating day id?
@@ -208,6 +219,7 @@ def create_updated_encounter_with_message(
 def find_encounter_match_score(
         msg_old: EncounterMessage,
         msg_new: EncounterMessage,
+        ticks_per_day: np.uint64 = 24 * 60 * 60,  # assumes one tick per second
 ):
     """Returns a 'match score' between two encounter messages.
 
@@ -226,9 +238,11 @@ def find_encounter_match_score(
         The match score (an integer in `[-1,message_uid_bit_count]`).
     """
     # TODO: determine if round/ceil should be applied...
-    day_offset = \
-        int(get_days_offset(msg_old.encounter_time,
-                            msg_new.encounter_time))
+    day_offset = int(get_days_offset(
+        msg_old.encounter_time,
+        msg_new.encounter_time,
+        ticks_per_day,
+    ))
     assert day_offset >= 0 and \
         0 <= msg_new.uid <= message_uid_mask and \
         0 <= msg_old.uid <= message_uid_mask
